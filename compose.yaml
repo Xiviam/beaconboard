@@ -1,0 +1,15 @@
+services:
+  beaconboard:
+    build: .
+    image: beaconboard:local
+    command: ["-config", "/etc/beaconboard/config.json"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.example.json:/etc/beaconboard/config.json:ro
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

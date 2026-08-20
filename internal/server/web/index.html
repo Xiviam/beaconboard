@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080c14">
+    <meta name="description" content="BeaconBoard real-time uptime monitoring dashboard">
+    <title>BeaconBoard — Uptime at a glance</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to dashboard</a>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BeaconBoard dashboard home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 17.5h2.4M7.1 14.1h2.4M10.2 10.7h2.4M13.3 7.3h2.4M16.4 3.9h2.4"></path>
+              <path d="M5.2 17.5h13.6"></path>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <span class="brand-name">BeaconBoard</span>
+            <span class="brand-tagline">Uptime monitor</span>
+          </span>
+        </a>
+
+        <div class="topbar-actions">
+          <div id="connection-status" class="connection-pill is-connecting" role="status" aria-live="polite">
+            <span class="connection-dot" aria-hidden="true"></span>
+            <span id="connection-label">Connecting</span>
+          </div>
+          <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh monitor data" title="Refresh monitor data">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M19.3 8.2A8 8 0 1 0 20 13"></path>
+              <path d="M19.3 3.8v4.5h-4.5"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main id="main-content">
+        <section class="hero" aria-labelledby="dashboard-title">
+          <div>
+            <p class="eyebrow"><span aria-hidden="true"></span> Real-time service health</p>
+            <h1 id="dashboard-title">Everything online,<br><span>at a glance.</span></h1>
+            <p class="hero-copy">Live status, response time, and reliability for every endpoint you care about.</p>
+          </div>
+          <div class="sync-meta" aria-label="Dashboard synchronization status">
+            <span>Last synchronized</span>
+            <strong id="last-synced">Waiting for data</strong>
+          </div>
+        </section>
+
+        <section class="summary-grid" aria-label="Service overview">
+          <article class="summary-card summary-card--total">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><rect x="4" y="5" width="16" height="14" rx="3"></rect><path d="M8 10h8M8 14h5"></path></svg>
+            </div>
+            <div>
+              <p>Total monitors</p>
+              <strong id="total-count">—</strong>
+            </div>
+            <span class="summary-caption">Endpoints tracked</span>
+          </article>
+
+          <article class="summary-card summary-card--healthy">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="m6.5 12.2 3.3 3.3 7.7-8"></path><circle cx="12" cy="12" r="9"></circle></svg>
+            </div>
+            <div>
+              <p>Operational</p>
+              <strong id="healthy-count">—</strong>
+            </div>
+            <span id="healthy-caption" class="summary-caption">Services online</span>
+          </article>
+
+          <article class="summary-card summary-card--pending">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M7 3h10M7 21h10"></path><path d="M8 3c0 3.8 1.4 6.1 4 7.5 2.6-1.4 4-3.7 4-7.5M8 21c0-3.8 1.4-6.1 4-7.5 2.6 1.4 4 3.7 4 7.5"></path></svg>
+            </div>
+            <div>
+              <p>Checking</p>
+              <strong id="pending-count">—</strong>
+            </div>
+            <span id="pending-caption" class="summary-caption">Awaiting first result</span>
+          </article>
+
+          <article class="summary-card summary-card--issues">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M12 8v5"></path><path d="M12 16.6v.1"></path><path d="M10.3 4.3 3.2 17a2 2 0 0 0 1.7 3h14.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"></path></svg>
+            </div>
+            <div>
+              <p>Needs attention</p>
+              <strong id="issue-count">—</strong>
+            </div>
+            <span id="issue-caption" class="summary-caption">Checking status</span>
+          </article>
+
+          <article class="summary-card summary-card--latency">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="13" r="8"></circle><path d="M12 13 16.5 9M9 3h6"></path></svg>
+            </div>
+            <div>
+              <p>Average latency</p>
+              <strong id="latency-average">—</strong>
+            </div>
+            <span class="summary-caption">Across latest checks</span>
+          </article>
+        </section>
+
+        <section class="monitor-section" aria-labelledby="monitors-title">
+          <div class="section-heading">
+            <div>
+              <div class="title-row">
+                <h2 id="monitors-title">Monitors</h2>
+                <span id="visible-count" class="count-badge" aria-label="0 monitors shown">0</span>
+              </div>
+              <p>Latest check results update automatically.</p>
+            </div>
+
+            <div class="controls">
+              <form id="search-form" class="search" role="search">
+                <label class="sr-only" for="monitor-search">Search monitors</label>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+                <input id="monitor-search" type="search" autocomplete="off" placeholder="Search monitors…">
+              </form>
+              <div class="filter-group" role="group" aria-label="Filter monitors by status">
+                <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+                <button class="filter-button" type="button" data-filter="healthy" aria-pressed="false">Online</button>
+                <button class="filter-button" type="button" data-filter="pending" aria-pressed="false">Checking</button>
+                <button class="filter-button" type="button" data-filter="issues" aria-pressed="false">Issues</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="notice" class="notice" role="alert" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16.5v.1"></path></svg>
+            <span id="notice-text"></span>
+            <button id="dismiss-notice" type="button" aria-label="Dismiss notification">Dismiss</button>
+          </div>
+
+          <div id="monitor-grid" class="monitor-grid" aria-busy="true">
+            <article class="monitor-card skeleton-card" aria-hidden="true">
+              <div class="skeleton skeleton--header"></div><div class="skeleton skeleton--line"></div><div class="skeleton skeleton--metrics"></div>
+            </article>
+            <article class="monitor-card skeleton-card" aria-hidden="true">
+              <div class="skeleton skeleton--header"></div><div class="skeleton skeleton--line"></div><div class="skeleton skeleton--metrics"></div>
+            </article>
+            <article class="monitor-card skeleton-card" aria-hidden="true">
+              <div class="skeleton skeleton--header"></div><div class="skeleton skeleton--line"></div><div class="skeleton skeleton--metrics"></div>
+            </article>
+          </div>
+
+          <div id="empty-state" class="empty-state" hidden>
+            <div class="empty-state-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M4 12h3l2-5 4.2 10 2.2-5H20"></path></svg>
+            </div>
+            <h3 id="empty-title">No monitors yet</h3>
+            <p id="empty-copy">Configured monitors will appear here after their first check.</p>
+            <button id="clear-filters" class="secondary-button" type="button" hidden>Clear filters</button>
+          </div>
+
+          <noscript>
+            <div class="notice notice--static">JavaScript is required to load live monitor status.</div>
+          </noscript>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span class="footer-brand"><span aria-hidden="true"></span> BeaconBoard</span>
+        <span>Quietly watching your services.</span>
+      </footer>
+    </div>
+
+    <div id="screen-reader-updates" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

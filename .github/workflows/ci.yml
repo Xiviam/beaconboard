@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  test:
+    name: Go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.23.x", "stable"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          files="$(gofmt -l .)"
+          if [[ -n "$files" ]]; then
+            printf 'Files requiring gofmt:\n%s\n' "$files"
+            exit 1
+          fi
+
+      - name: Verify module files
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go mod verify
+
+      - name: Vet
+        run: go vet -mod=readonly ./...
+
+      - name: Test with race detector
+        run: go test -mod=readonly -race -shuffle=on -timeout=3m -coverprofile=coverage.out ./...
+
+      - name: Build static binary
+        run: CGO_ENABLED=0 go build -mod=readonly -trimpath -o /tmp/beaconboard ./cmd/beaconboard
+
+  container:
+    name: Docker smoke test
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Build image
+        run: docker build --build-arg VERSION=ci --build-arg COMMIT="$GITHUB_SHA" -t beaconboard:ci .
+
+      - name: Run hardened smoke test
+        shell: bash
+        run: |
+          container_id="$(docker run -d \
+            --read-only \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --mount type=bind,src="$PWD/testdata/smoke.json",dst=/etc/beaconboard/config.json,readonly \
+            -p 127.0.0.1::8080 \
+            beaconboard:ci)"
+          trap 'docker logs "$container_id" || true; docker rm -f "$container_id" >/dev/null 2>&1 || true' EXIT
+
+          port="$(docker port "$container_id" 8080/tcp | awk -F: 'NR==1 {print $NF}')"
+          ready=false
+          for _ in {1..30}; do
+            if curl -fsS "http://127.0.0.1:$port/healthz" >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = true
+          curl -fsS "http://127.0.0.1:$port/" >/dev/null
+          curl -fsS "http://127.0.0.1:$port/api/v1/monitors" >/dev/null
+          curl -fsS "http://127.0.0.1:$port/metrics" >/dev/null
+
+          docker stop --time 10 "$container_id" >/dev/null
+          test "$(docker inspect -f '{{.State.ExitCode}}' "$container_id")" = 0

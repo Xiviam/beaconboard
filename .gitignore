@@ -1,0 +1,9 @@
+/beaconboard
+/beaconboard.exe
+/dist/
+/coverage.out
+/.idea/
+/.vscode/
+*.log
+beaconboard.json
+.env

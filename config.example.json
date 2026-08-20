@@ -1,0 +1,26 @@
+{
+  "listen": ":8080",
+  "history_limit": 120,
+  "targets": [
+    {
+      "id": "example",
+      "name": "Example website",
+      "url": "https://example.com",
+      "interval": "30s",
+      "timeout": "5s",
+      "expected_status": 200
+    },
+    {
+      "id": "github-api",
+      "name": "GitHub API",
+      "url": "https://api.github.com",
+      "method": "GET",
+      "interval": "45s",
+      "timeout": "5s",
+      "expected_status": 200,
+      "headers": {
+        "Accept": "application/vnd.github+json"
+      }
+    }
+  ]
+}
